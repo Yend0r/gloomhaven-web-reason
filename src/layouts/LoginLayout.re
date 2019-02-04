@@ -1,16 +1,16 @@
-[%bs.raw {|require('../css/login.css')|}];
+[%bs.raw {|require('../css/loginLayout.css')|}];
+[%bs.raw {|require('../css/layout.css')|}];
 
 let component = ReasonReact.statelessComponent("LoginLayout");
 
-let make = (~content, _children) => {
+let make = (~page, _children) => {
     ...component,
 
     render: (_self) => 
-        /* This wold be used for login, forgotten password, etc */
-        <div>
-            <div className="login-bg"></div>
-            <div className="login">
-                <div className="login-container">{content}</div>
+        /* This is be used for login, forgotten password, etc */
+        <div className="hero is-success is-fullheight">
+            <div className="hero-body">
+                {page}
             </div>
-        </div>
+        </div> 
 };

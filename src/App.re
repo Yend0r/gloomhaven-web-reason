@@ -25,5 +25,20 @@ let make = (_children) => {
         };
     },
 
-    render: self => Router.resolve(Session.isLoggedIn(), self.state.currentUrl)
+    render: ({state}) => {
+        let renderContent = () => {
+            let isLoggedIn = Session.isLoggedIn();
+            let routePage = Router.getPageForRoute(isLoggedIn, state.currentUrl);
+            let page = routePage.getPage(state.currentUrl);
+
+            switch (routePage.layout) {
+                | DefaultLayout => 
+                    <DefaultLayout page /> 
+                | LoginLayout => 
+                    <LoginLayout page />
+                };
+        };
+
+        {renderContent()}  
+    }
 };

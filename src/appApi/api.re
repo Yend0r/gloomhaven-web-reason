@@ -108,7 +108,8 @@ module Fetcher : FetcherType = {
     };
 
     let handleProcessingError = (error) => {
-        /* Apparently this will only return "TypeError: failed to fetch"... sigh */
+        /* Apparently this will only return "TypeError: failed to fetch"... 
+           so the actual error cannot be retrieved... sigh */
         Js.log(error);
         let err =
             {
@@ -154,12 +155,30 @@ module Fetcher : FetcherType = {
         ) |> ignore;
     };
 
+    let contentTypeHeader = (headers) => {
+        [("Content-Type", "application/json"), ...headers];
+    };
+
+    let authorizationHeader = (headers) => {
+        switch (Session.getCurrentUser()) {
+        | Some(user) => [("Authorization", user.accessToken), ...headers]
+        | None => headers
+        };
+    };
+
+    let getHeaders = () => {
+        []
+        |> contentTypeHeader
+        |> authorizationHeader
+        |> Js.Dict.fromList
+    };
+
     let get = (url, onSuccess: apiOnSuccess, onError: apiOnError) => {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Get,
             ~credentials=Include,
-            ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+            ~headers=Fetch.HeadersInit.makeWithDict(getHeaders()),
             ()
         );
 
@@ -172,7 +191,7 @@ module Fetcher : FetcherType = {
             ~method_=Post,
             ~body=Fetch.BodyInit.make(data),
             ~credentials=Include,
-            ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+            ~headers=Fetch.HeadersInit.makeWithDict(getHeaders()),
             ()
         );
     

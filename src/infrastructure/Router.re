@@ -1,48 +1,60 @@
 
-let defaultHandler = (url: ReasonReact.Router.url) => {
-    switch url.path {
-        | [] => Some(Routes.defaultRoute)
-        | _  => None
+type pageLayout = 
+    | LoginLayout
+    | DefaultLayout;
+
+type routePage = {
+    getPage: (ReasonReact.Router.url => ReasonReact.reactElement),
+    layout: pageLayout,
+    authRequired: bool
+};
+
+let createPage = (layout, authRequired, getPage) => {
+    layout: layout, 
+    getPage: getPage,
+    authRequired: authRequired
+};
+
+/* These are the "top-level" routes that then have further routing within them */
+module Pages = {
+    let auth = createPage(LoginLayout, false, (url) => <AuthPage url/>);
+    let accounts = createPage(DefaultLayout, true, (url) => <AuthPage url/>);
+    let home = createPage(DefaultLayout, true, (url) => <CharacterPage url />);
+    let notFound = createPage(DefaultLayout, false, (url) => <AuthPage url />);
+    let characters = createPage(DefaultLayout, true, (url) => <CharacterPage url />);
+};
+
+module SpecialPages = {
+    let loginPage = Pages.auth;
+    let homePage = Pages.characters;
+};
+
+let matchRoute = (rootPath: string) => {
+    Js.log("Router: matching on: " ++ rootPath);
+    switch rootPath {
+        | ""             => Pages.home
+        | "auth" => Pages.auth
+        | "accounts"     => Pages.accounts
+        | "characters"   => Pages.characters
+        | _ => Pages.notFound /* no match => go to 404 */
     };
 };
 
-let routeHandlers = () => [
-    defaultHandler,
-    AuthRouter.routeHandler,
-    CharacterRouter.routeHandler
-];
+let getPageForRoute = (isLoggedIn, url: ReasonReact.Router.url) => {
 
-let checkLogin = (isLoggedIn: bool, route) => 
-    isLoggedIn ? route : Routes.Auth(Login);
-
-let resolve = (isLoggedIn: bool, url: ReasonReact.Router.url) => {
-
-    let routeElms = 
-        routeHandlers()
-        |> List.map(handler => handler(url))
-        |> List.filter(Belt.Option.isSome);
-
-    let routeElm = 
-        switch routeElms {
-            | [Some(elm), ..._rest] => elm
-            | _ => Routes.notFoundRoute
+    let page = 
+        switch (url.path) {
+            | [rootPath, ..._rest] => matchRoute(rootPath) 
+            | _ => Pages.home /* no path => go to default page */
         };
 
-    switch (isLoggedIn, routeElm) {
-        | (true, Routes.AuthRequired(elm)) => elm
-        | (false, Routes.AuthRequired(_)) => Routes.loginElement 
-        | (_, Routes.Public(elm)) => elm
+    /* Check that user is authorised to view content */
+    switch (isLoggedIn, page.authRequired) {
+        | (false, true) => Pages.auth /* No access... force login */             
+        | (_, _) => page 
     };
 };
 
-let pathFor = (route: Routes.route) : string => 
-    switch (route) 
-    {
-        | Auth(action) => AuthRouter.pathHandler(action)
-        | Character(action) => CharacterRouter.pathHandler(action)
-    };
+let getInitialUrl = () => 
+    ReasonReact.Router.dangerouslyGetInitialUrl();
 
-let navigate = (route: Routes.route) => 
-    route
-    |> pathFor
-    |> ReasonReact.Router.push;

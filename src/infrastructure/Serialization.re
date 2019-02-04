@@ -15,3 +15,6 @@ let deserializeOption = (deserializer: Js.Json.t => 'a, jsonString: option(strin
     | Some(s) => Some(deserialize(deserializer, s))
     | None => None
 };
+
+let deserializeApiListResponse = (deserializeJson : Js.Json.t => 'a, json) => 
+    Json.Decode.field("data", Json.Decode.list(deserializeJson), json);

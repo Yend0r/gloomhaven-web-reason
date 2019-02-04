@@ -1,0 +1,13 @@
+
+.property-edit {
+    width: 4em;
+    text-align: center;
+    vertical-align: bottom;
+    border: 1px solid antiquewhite;
+    line-height: 30px;
+}
+
+/* Bulma override */
+.field-label-half {
+    flex-grow: 0.5;
+}

@@ -23,5 +23,30 @@ module.exports = {
     host: '127.0.0.1',
     port: process.env.PORT || 8000,
     historyApiFallback: true
-  }
+  },
+    module: {
+        rules: [
+            {
+                test: /\.css$/,
+                use: [
+                    { loader: 'style-loader' },
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            modules: false
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.(png|jpg|gif)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {},
+                    },
+                ],
+            }
+        ]
+    }
 };

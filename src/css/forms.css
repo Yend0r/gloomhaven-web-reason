@@ -1,0 +1,27 @@
+/*
+form {
+    padding: 10%;
+}
+
+.form-group {
+    margin-top: 10px;
+}
+
+.form-group:first-child {
+    margin-top: 0;
+}
+
+input {
+    font-size: 1.2rem;
+    line-height: 2.5rem;
+    padding: 0 0.6rem;
+    width: 20rem;
+}
+*/
+
+.invalid-message {
+    width: 100%;
+    margin-top: .25rem;
+    font-size: 80%;
+    color: #dc3545;
+}
