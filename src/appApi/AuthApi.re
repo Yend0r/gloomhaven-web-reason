@@ -34,5 +34,5 @@ let authenticate = (email: string, password: string, onAuthSuccess, onAuthError)
         { email: email, password: password } 
         |> Serialization.serialize(serializeLoginRequest);
 
-    Api.Fetcher.post(Settings.authenticateUrl(), postData, onSuccess, onAuthError);
+    Api.Fetcher.post(Settings.authenticateUrl(), postData, OnJson(onSuccess), onAuthError);
 };

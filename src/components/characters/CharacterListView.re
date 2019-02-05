@@ -32,10 +32,10 @@ let make = (~data: list(CharacterApi.characterListItem), _children) => {
                             <tbody>
                                 (renderTR("Class", item.ghClassName))
                                 (renderTR("Level", string_of_int(item.level)))
-                                (renderTR("XP", string_of_int(item.experience)))
-                                (renderTR("Gold", string_of_int(item.gold)))      
+                                (renderTR("Gold", string_of_int(item.gold)))    
+                                (renderTR("XP", string_of_int(item.experience)))  
                             </tbody>
-                        </table>
+                        </table> 
 
                         <UIButton 
                             title="Play Character" 

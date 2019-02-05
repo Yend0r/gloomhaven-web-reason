@@ -25,7 +25,7 @@ module DataFetcher = (Config: {let name: string; type t;}) => {
             let onFetchError: (Api.apiOnError) = (error) => {
                 switch (error) {
                 | Unauthorised => Session.logout()
-                | ApiError(err) => self.send(Error(err.summary))
+                | ApiError(err) => self.send(Error(err.message))
                 };
             };
             

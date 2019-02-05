@@ -1,3 +1,4 @@
+open CharacterApi;
 
 type state = {
     character: CharacterApi.character,
@@ -6,7 +7,7 @@ type state = {
     experience: int,
     gold: int,
     achievements: int,
-    selectedPerks: list(CharacterApi.claimedPerk),
+    selectedPerks: list(CharacterApi.selectedPerk),
     fieldErrors: list(FormUtils.fieldError)
 };
 
@@ -25,7 +26,8 @@ type action =
     | ChangeName(string)
     | UpdateGold(incDec)
     | UpdateXp(incDec)
-    | UpdateAchievements(incDec);
+    | UpdateAchievements(incDec)
+    | UpdatePerks(list(CharacterApi.selectedPerk));
 
 let component = ReasonReact.reducerComponent("CharacterEditForm");
 
@@ -45,7 +47,7 @@ let make = (~character: CharacterApi.character,
         experience: character.experience,
         gold: character.gold,
         achievements: character.achievements,
-        selectedPerks: character.claimedPerks,
+        selectedPerks: character.claimedPerks |> List.map(p => mapToSelectedPerk(p)),
         fieldErrors: [] 
     },
 
@@ -75,12 +77,15 @@ let make = (~character: CharacterApi.character,
                 let achv = incDecValue(incDec, state.achievements);
                 ReasonReact.Update({...state, achievements: achv});
             }
+            | UpdatePerks(perks) => 
+                ReasonReact.Update({...state, selectedPerks: perks})
         };
     },
 
     render: ({state, send}) => {   
 
         let onChangeName = (event) => send(ChangeName(event |> Utils.valueFromEvent));
+
         let onDecGold = () => send(UpdateGold(Decrement));
         let onIncGold = () => send(UpdateGold(Increment));
 
@@ -89,8 +94,9 @@ let make = (~character: CharacterApi.character,
 
         let onDecAchv = () => send(UpdateAchievements(Decrement));
         let onIncAchv = () => send(UpdateAchievements(Increment));
-        
-        let onChangePerk = (perkId, quantity) => (); 
+
+        let onChangePerks = (selectedPerks: list(CharacterApi.selectedPerk)) => 
+            send(UpdatePerks(selectedPerks));
 
         let submit = () => {
             let characterUpdate: CharacterApi.characterUpdate = {
@@ -98,7 +104,7 @@ let make = (~character: CharacterApi.character,
                 experience: state.experience,
                 gold: state.gold,
                 achievements: state.achievements,
-                perks: []
+                perks: state.selectedPerks
             };
             onSubmit(characterUpdate);
         };
@@ -150,11 +156,11 @@ let make = (~character: CharacterApi.character,
                 onDecrement=onDecAchv
                 onIncrement=onIncAchv
                 layout=Vertical />
-      
+                 
             <PerkChooser
                 ghClass=state.ghClass
                 selectedPerks=state.selectedPerks
-                onChange=onChangePerk
+                onChange=onChangePerks
                 fieldErrors=[] />
        
             <div className="field is-grouped m-t-lg">

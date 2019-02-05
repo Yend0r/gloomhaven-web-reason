@@ -1,5 +1,4 @@
 open CharacterApi;
-open GameDataApi;
 
 type chkbxItem = {
     value: string,
@@ -8,62 +7,22 @@ type chkbxItem = {
 
 type state = {
     ghClass: GameDataApi.ghClass,
-    items : list(chkbxItem),
-    selectedItems: list(string),
-    selectedPerks: list(CharacterApi.claimedPerk),
+    selectedPerks: list(CharacterApi.selectedPerk),
     fieldErrors: list(FormUtils.fieldError)
 };
 
-let mapToSelectedPerk = (perk: CharacterApi.claimedPerk) : CharacterApi.selectedPerk => {
-    id: perk.id, 
-    quantity: perk.quantity
-};
-
-let addChkbxItem = (idx: int, perk: GameDataApi.perk, items: list(chkbxItem)) => {
-    let value = string_of_int(idx) ++ "-" ++ perk.id;
-    let item = { value: value, label: perk.actions };
-    [item, ... items];
-};
-
-let rec perkToChkbx = (idx: int, perk: GameDataApi.perk, items: list(chkbxItem)) => {    
-    switch(idx) {
-        | 1 => items |> addChkbxItem(1, perk);
-        | _ => items |> addChkbxItem(idx, perk) |> perkToChkbx(idx - 1, perk);
-    };
-};
-
-let perkListToItemList = (perks: list(GameDataApi.perk)) : list(chkbxItem) => {
-    perks 
-    |> List.fold_left((items, perk) => perkToChkbx(perk.quantity, perk, items), [])
-    |> List.rev;
-};
-
-let addIdItem = (idx: int, perk: CharacterApi.claimedPerk, items: list(string)) => {
-    let id = string_of_int(idx) ++ "-" ++ perk.id;
-    [id, ... items];
-};
-
-let rec perkToId = (idx: int, perk: CharacterApi.claimedPerk, items: list(string)) => {    
-    switch(idx) {
-        | 1 => items |> addIdItem(1, perk);
-        | _ => items |> addIdItem(idx, perk) |> perkToId(idx - 1, perk);
-    };
-};
-
-let perkListToIdList = (perks: list(CharacterApi.claimedPerk)) : list(string) => {
-    perks 
-    |> List.fold_left((items, perk: CharacterApi.claimedPerk) => perkToId(perk.quantity, perk, items), [])
-    |> List.rev;
-};
+type incDec = 
+    | Increment
+    | Decrement;
 
 type action =
     | SetFieldErrors(list(FormUtils.fieldError))
-    | TogglePerk(string);
+    | UpdatePerks(string, incDec);
 
 let component = ReasonReact.reducerComponent("PerkChooser");
 
 let make = (~ghClass: GameDataApi.ghClass,
-            ~selectedPerks: list(CharacterApi.claimedPerk),
+            ~selectedPerks: list(CharacterApi.selectedPerk),
             ~onChange, 
             ~fieldErrors,
             _children) => {
@@ -72,61 +31,81 @@ let make = (~ghClass: GameDataApi.ghClass,
 
     initialState: () => { 
         ghClass: ghClass,
-        items: perkListToItemList(ghClass.perks),
-        selectedItems: perkListToIdList(selectedPerks),
         selectedPerks: selectedPerks,
         fieldErrors: fieldErrors 
     },
 
     reducer: (action, state) => {
+        let incDecValue = (incDec, value) => 
+            switch (incDec) {
+            | Increment => value + 1;
+            | Decrement => (value <= 0) ? 0 : value - 1;
+            };
+
         switch action {
             | SetFieldErrors(errors) => 
                 ReasonReact.Update({...state, fieldErrors: errors})
-            | TogglePerk(chkbxId) => 
-                let isChecked = state.selectedItems |> List.mem(chkbxId);
-                let newSelectedItems = 
-                    if (isChecked) {
-                        state.selectedItems |> List.filter(p => p != chkbxId)
-                    } else {
-                        [chkbxId, ...state.selectedItems]
-                    }
-                ReasonReact.Update({...state, selectedItems: newSelectedItems})            
+            | UpdatePerks(perkId, incDec) => {
+                let selectedPerk = state.selectedPerks |> Utils.listTryFind(p => p.id == perkId);
+
+                let newPerks = 
+                    switch(selectedPerk){
+                        | None => [{id: perkId, quantity: 1},...state.selectedPerks]
+                        | Some(_) => {
+                            state.selectedPerks
+                            |> List.map(p => 
+                                switch (p.id == perkId) {
+                                    | true => {id: perkId, quantity: incDecValue(incDec, p.quantity)}
+                                    | false => p
+                                }
+                            )
+                        }
+                    };
+
+                ReasonReact.UpdateWithSideEffects(
+                    {...state, selectedPerks: newPerks}, 
+                    self => onChange(self.state.selectedPerks)
+                );
+            }
         };
     },
 
     render: ({state, send}) => {   
-
-        let onTogglePerk = (event) => {
-
-            send(TogglePerk(event |> Utils.valueFromEvent));
-        };
         
-        let renderItem = (item: chkbxItem, selectedItems: list(string)) => {
-            let isChecked = selectedItems |> List.mem(item.value);
+        let onDecPerk = (perkId) => send(UpdatePerks(perkId, Decrement));
+        let onIncPerk = (perkId) => send(UpdatePerks(perkId, Increment));
+
+        let renderPerk = (perk: GameDataApi.perk, selectedPerks: list(CharacterApi.selectedPerk)) => {
+
+            /* This match fn is here to help the compiler */
+            let matchPerkId = (perk: GameDataApi.perk, selectedPerk: CharacterApi.selectedPerk) =>
+                perk.id == selectedPerk.id;
+
+            let selectedPerk = selectedPerks |> Utils.listTryFind(p => matchPerkId(perk, p));
+
+            let currentQty = Belt.Option.mapWithDefault(selectedPerk, 0, p => p.quantity);
             
-            <div className="field" key=("chkbx" ++ item.value)>
-                <label className="checkbox has-text-weight-bold" key=item.value >
-                    <input 
-                        type_="checkbox" 
-                        value=item.value
-                        key=item.value 
-                        className="m-r-sm" 
-                        checked=isChecked
-                        onChange=onTogglePerk/>
-                    (Elem.string(item.label)) 
-                </label>
+            <div key=("perkQty-"++perk.id)>
+                <NumberInput label=perk.actions
+                    value=currentQty 
+                    onDecrement=(() => onDecPerk(perk.id))
+                    onIncrement=(() => onIncPerk(perk.id))
+                    minInclusive=0 
+                    maxInclusive=perk.quantity
+                    showMax=true 
+                    layout=Horizontal />
             </div>
         };
             
-        let renderItems = (items: list(chkbxItem), selectedItems: list(string)) => 
-            items
-            |> List.map(item => renderItem(item, selectedItems))
+        let renderPerks = (perks: list(GameDataApi.perk), selectedPerks: list(CharacterApi.selectedPerk)) => 
+            perks
+            |> List.map(perk => renderPerk(perk, selectedPerks))
             |> Array.of_list
             |> ReasonReact.array;
         
         <div className="field">
             <label className="label">(Elem.string("Perks"))</label>
-            (renderItems(state.items, state.selectedItems)) 
+            (renderPerks(state.ghClass.perks, state.selectedPerks)) 
         </div>
     }
 };

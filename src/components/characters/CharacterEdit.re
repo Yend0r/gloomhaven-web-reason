@@ -87,7 +87,7 @@ let make = (~characterId: int, _children) => {
             switch (optCharacter, optGhClass) {
             | (Some(character), Some(ghClass)) => 
                 <div className="columns">
-                    <div className="column is-4">
+                    <div className="column is-6">
                         <h3 className="title is-3">(Elem.string("Edit Character"))</h3>
                         <CharacterEditForm 
                             character

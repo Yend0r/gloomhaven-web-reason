@@ -115,15 +115,15 @@ let get = (id: int, onSuccess, onError: Api.apiOnError) => {
 };
 
 let add = (newCharacter: newCharacter, onSuccess, onError: Api.apiOnError) => {
-    let onAddSuccess = (_result) => onSuccess();
+    let onAddSuccess = (_) => onSuccess();
     let postData = newCharacter |> Serialization.serialize(serializeNewCharacter);
 
-    Api.Fetcher.post(Settings.charactersUrl(), postData, onAddSuccess, onError);
+    Api.Fetcher.post(Settings.charactersUrl(), postData, On204(onAddSuccess), onError);
 };
 
 let update = (characterId: int, characterUpdate: characterUpdate, onSuccess, onError: Api.apiOnError) => {
-    let onAddSuccess = (_result) => onSuccess();
+    let onAddSuccess = (_) => onSuccess();
     let postData = characterUpdate |> Serialization.serialize(serializeCharacterUpdate);
 
-    Api.Fetcher.post(Settings.characterUrl(characterId), postData, onAddSuccess, onError);
+    Api.Fetcher.post(Settings.characterUrl(characterId), postData, On204(onAddSuccess), onError);
 };

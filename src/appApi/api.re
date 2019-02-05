@@ -2,7 +2,7 @@ open Json;
 
 /* These two types are used to pre-process the api response */
 type apiResponseError = {
-    responseBody: string,
+    jsonError: string,
     status: int
 };
 
@@ -11,22 +11,22 @@ type apiResponse =
   | ErrorResponse(apiResponseError); 
 
 /* These types are used to package the api response nicely for other code */
-type errorDetail = {
-    title: string,
-    detail: string
-};
- 
 type apiError = {
     status: int,
-    errors: array(errorDetail),
-    summary: string
+    message: string,
+    detail: string
 };
 
 type apiErrorResult = 
     | Unauthorised
     | ApiError(apiError);
 
-type apiOnSuccess = Js.Json.t => unit;
+type apiOnGetSuccess = Js.Json.t => unit;
+
+type apiOnPostSuccess = 
+    | OnJson(Js.Json.t => unit)
+    | On204(unit => unit);
+
 type apiOnError = apiErrorResult => unit;
 
 /* Internal types */
@@ -34,37 +34,24 @@ type callResult('a) =
     | Success('a)
     | Fail(apiErrorResult);
 
-let mapApiErrorJson = (json): errorDetail => {
-    title: Decode.field("title", Decode.string, json),
+let mapApiErrorJson = (status, json): apiError => {
+    status: status,
+    message: Decode.field("message", Decode.string, json),
     detail: Decode.field("detail", Decode.string, json)
-};
-
-let getErrorSummary = (apiError: array(errorDetail)) => {
-    let firstErr = apiError[0];
-    if (firstErr.title == firstErr.detail || Utils.stringIsEmpty(firstErr.detail)) {
-        firstErr.title
-    } else {
-        firstErr.title ++ " " ++ firstErr.detail
-    };
 };
 
 let mapApiErrorResponse = (status, json) => {
     if (status == 401) {
         Unauthorised;
     } else {
-        let errors = Decode.field("errors", Decode.array(mapApiErrorJson), json);
-        let error = {
-            status: status,
-            errors: errors,
-            summary: getErrorSummary(errors)
-        };
+        let error = mapApiErrorJson(status, json);
         ApiError(error);
     }       
 };
 
 module type FetcherType = {
-    let get: (string, apiOnSuccess, apiOnError) => unit;
-    let post: (string, string, apiOnSuccess, apiOnError) => unit;
+    let get: (string, apiOnGetSuccess, apiOnError) => unit;
+    let post: (string, string, apiOnPostSuccess, apiOnError) => unit;
 };
 
 module Fetcher : FetcherType = {
@@ -73,15 +60,15 @@ module Fetcher : FetcherType = {
         Js.Promise.then_((value) => Js.Promise.resolve(OkResponse(value)), promise);
 
     let wrapErrorPromise = (status, promise) => {
-        let err = (value) => ErrorResponse({responseBody: value, status: status});
+        let err = (value) => ErrorResponse({jsonError: value, status: status});
         Js.Promise.then_((value) => Js.Promise.resolve(err(value)), promise);
     };
 
     let wrapResponse = (response) => {
         /* Ok = true => status = 200...299 */
         let ok = Bs_fetch.Response.ok(response); 
-        switch ok {
-        | true => {
+        switch (ok) {
+        | true => {                
                 Bs_fetch.Response.text(response)
                 |> wrapOkPromise;
             }
@@ -96,11 +83,18 @@ module Fetcher : FetcherType = {
     let handleResponse = (result) => {
         switch result {
         | OkResponse(responseBody) => {
-                Js.Json.parseExn(responseBody) 
+                let json = 
+                    if (Utils.stringIsEmpty(responseBody)) {
+                        /* This is terrible... fix it */
+                        "{\"Response\":\"204 NoContent\"}";
+                    } else {
+                        responseBody
+                    };
+                Js.Json.parseExn(json) 
                 |> (s) => Success(s)
             }
         | ErrorResponse(apiResponseError) => {
-                Js.Json.parseExn(apiResponseError.responseBody) 
+                Js.Json.parseExn(apiResponseError.jsonError) 
                 |> mapApiErrorResponse(apiResponseError.status)
                 |> (s) => Fail(s)
             } 
@@ -114,11 +108,8 @@ module Fetcher : FetcherType = {
         let err =
             {
                 status: 500,
-                errors: 
-                [|
-                    {title: "Unknown Error", detail: "Please try again later."}
-                |], 
-                summary: "Unknown Error. Please try again later."
+                message: "Unknown Error. Please try again later.",
+                detail: "Unknown Client Error."
             };
         Fail(ApiError(err));
     };
@@ -128,7 +119,10 @@ module Fetcher : FetcherType = {
         | Success(json) => {
             Js.log("API SUCCESS");
             Js.log(json);
-            onSuccess(json);
+            switch(onSuccess){
+            | OnJson(processJson) => processJson(json);
+            | On204(process204) => process204();
+            };
         }
         | Fail(error) => onError(error)
         } 
@@ -173,7 +167,7 @@ module Fetcher : FetcherType = {
         |> Js.Dict.fromList
     };
 
-    let get = (url, onSuccess: apiOnSuccess, onError: apiOnError) => {
+    let get = (url, onSuccess: apiOnGetSuccess, onError: apiOnError) => {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Get,
@@ -182,10 +176,10 @@ module Fetcher : FetcherType = {
             ()
         );
 
-        callApi(url, fetchOptions, onSuccess, onError);
+        callApi(url, fetchOptions, OnJson(onSuccess), onError);
     };
 
-    let post = (url, data, onSuccess: apiOnSuccess, onError: apiOnError) => {
+    let post = (url, data, onSuccess: apiOnPostSuccess, onError: apiOnError) => {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Post,

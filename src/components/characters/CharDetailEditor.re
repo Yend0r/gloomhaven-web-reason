@@ -11,10 +11,18 @@ let make = (~label, ~value, ~onDecrement, ~onIncrement, ~layout, _children) => {
         let onDec = Utils.handleBtnClick(onDecrement);
         let onInc = Utils.handleBtnClick(onIncrement);
         
+        let getBtnCss = () => {
+            if (value == 0) {
+                "button is-light"
+            } else {
+                "button is-primary"
+            }
+        };
+
         let renderField = () => 
             <div className="field is-narrow has-addons"> /*has-addons-centered*/
                 <p className="control">
-                    <a className="button is-primary" onClick=onDec>
+                    <a className=getBtnCss() onClick=onDec>
                         (Elem.string("Less"))
                     </a>
                 </p>
@@ -24,7 +32,7 @@ let make = (~label, ~value, ~onDecrement, ~onIncrement, ~layout, _children) => {
                     </p>
                 </div>
                 <p className="control">
-                    <a className="button is-primary" onClick=onInc>
+                    <a className=getBtnCss() onClick=onInc>
                         (Elem.string("More"))
                     </a>
                 </p>

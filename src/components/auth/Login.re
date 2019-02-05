@@ -42,7 +42,7 @@ let make = (_children) => {
         let onError: (Api.apiOnError) = (error) => {
             switch (error) {
             | Unauthorised => send(SetError("Login currently unavailable.")) /* Server error? */
-            | ApiError(err) => send(SetError(err.summary))
+            | ApiError(err) => send(SetError(err.message))
             };
         };
 
