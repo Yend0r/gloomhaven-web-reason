@@ -8,7 +8,7 @@ module DataFetcher = (Config: {let name: string; type t;}) => {
     let component = ReasonReact.reducerComponent("GenericFetcher-" ++ Config.name);
 
     let make = (
-        ~fetch: (Config.t => unit, Api.apiOnError) => unit, 
+        ~fetch: (Config.t => unit, string => unit) => unit, 
         ~renderLoading=?, 
         ~renderData, 
         _children) => {
@@ -21,13 +21,7 @@ module DataFetcher = (Config: {let name: string; type t;}) => {
 
         didMount: self => {
             let onFetchSuccess = (data) => self.send(Loaded(data));
-
-            let onFetchError: (Api.apiOnError) = (error) => {
-                switch (error) {
-                | Unauthorised => Session.logout()
-                | ApiError(err) => self.send(Error(err.message))
-                };
-            };
+            let onFetchError = (error) => self.send(Error(error));
             
             fetch(onFetchSuccess, onFetchError);
         },

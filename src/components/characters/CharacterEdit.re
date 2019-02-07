@@ -60,8 +60,7 @@ let make = (~characterId: int, _children) => {
     },
 
     didMount: self => {
-        let onFetchError = (error) => 
-            ApiUtils.processApiError(error, msg => self.send(SetFetchError(msg)));
+        let onFetchError = (error) => self.send(SetFetchError(error));
 
         let onFetchSuccess = (character: CharacterApi.character, ghClass: GameDataApi.ghClass) => 
             self.send(Loaded(character, ghClass));
@@ -77,7 +76,7 @@ let make = (~characterId: int, _children) => {
         let gotoList = () => Routes.navigate(Routes.Character(List));
 
         let onSubmit = (characterUpdate) => {
-            let onError = (error) => ApiUtils.processApiError(error, msg => send(SetSubmissionError(msg)));
+            let onError = (error) => send(SetSubmissionError(error));
             let onSuccess = () => gotoList(); 
   
             CharacterApi.update(characterId, characterUpdate, onSuccess, onError); 

@@ -39,12 +39,7 @@ let make = (_children) => {
             navigate(Character(CharacterRoutes.List));
         };
 
-        let onError: (Api.apiOnError) = (error) => {
-            switch (error) {
-            | Unauthorised => send(SetError("Login currently unavailable.")) /* Server error? */
-            | ApiError(err) => send(SetError(err.message))
-            };
-        };
+        let onError = (error) => send(SetError(error));
 
         let onSubmit = (email, password) => {
             AuthApi.authenticate(email, password, onSuccess, onError);

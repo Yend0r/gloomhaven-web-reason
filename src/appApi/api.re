@@ -1,38 +1,39 @@
 open Json;
 
-/* These two types are used to pre-process the api response */
-type apiResponseError = {
-    jsonError: string,
-    status: int
-};
-
-type apiResponse = 
-  | OkResponse(string)
-  | ErrorResponse(apiResponseError); 
-
-/* These types are used to package the api response nicely for other code */
 type apiError = {
     status: int,
     message: string,
     detail: string
 };
 
-type apiErrorResult = 
+type callResult = 
+    | Ok(string)
+    | NoContent
     | Unauthorised
-    | ApiError(apiError);
+    | Error(apiError);
 
-type apiOnGetSuccess = Js.Json.t => unit;
+let onContentResult = (deserializer, onSuccess, onError) => (callResult) => {
+    let onContentSuccess = (result) => 
+        result 
+        |> Js.Json.parseExn
+        |> deserializer 
+        |> onSuccess;
 
-type apiOnPostSuccess = 
-    | OnJson(Js.Json.t => unit)
-    | On204(unit => unit);
+    switch (callResult: callResult) {
+        | NoContent => onError("Error. No data returned from server.")
+        | Ok(result) => onContentSuccess(result)
+        | Unauthorised => Session.logout() 
+        | Error(err) => onError(err.message)
+    };
+};
 
-type apiOnError = apiErrorResult => unit;
-
-/* Internal types */
-type callResult('a) = 
-    | Success('a)
-    | Fail(apiErrorResult);
+let onNoContentResult = (onSuccess, onError) => (callResult) => 
+    switch (callResult: callResult) {
+        | NoContent => onSuccess()
+        | Ok(_) => onSuccess()
+        | Unauthorised => Session.logout() 
+        | Error(err) => onError(err.message)
+    };
 
 let mapApiErrorJson = (status, json): apiError => {
     status: status,
@@ -40,68 +41,19 @@ let mapApiErrorJson = (status, json): apiError => {
     detail: Decode.field("detail", Decode.string, json)
 };
 
-let mapApiErrorResponse = (status, json) => {
-    if (status == 401) {
-        Unauthorised;
-    } else {
-        let error = mapApiErrorJson(status, json);
-        ApiError(error);
-    }       
-};
+let toCallResultError = (status, jsonString) => 
+    Js.Json.parseExn(jsonString) 
+    |> mapApiErrorJson(status)
+    |> (e) => Error(e);
 
 module type FetcherType = {
-    let get: (string, apiOnGetSuccess, apiOnError) => unit;
-    let post: (string, string, apiOnPostSuccess, apiOnError) => unit;
+    let get: (string, callResult => unit) => unit;
+    let post: (string, string, callResult => unit) => unit;
 };
 
 module Fetcher : FetcherType = {
-
-    let wrapOkPromise = (promise) => 
-        Js.Promise.then_((value) => Js.Promise.resolve(OkResponse(value)), promise);
-
-    let wrapErrorPromise = (status, promise) => {
-        let err = (value) => ErrorResponse({jsonError: value, status: status});
-        Js.Promise.then_((value) => Js.Promise.resolve(err(value)), promise);
-    };
-
-    let wrapResponse = (response) => {
-        /* Ok = true => status = 200...299 */
-        let ok = Bs_fetch.Response.ok(response); 
-        switch (ok) {
-        | true => {                
-                Bs_fetch.Response.text(response)
-                |> wrapOkPromise;
-            }
-        | false => {
-                let status = Bs_fetch.Response.status(response);
-                Bs_fetch.Response.text(response)
-                |> wrapErrorPromise(status);
-            }
-        };
-    };
   
-    let handleResponse = (result) => {
-        switch result {
-        | OkResponse(responseBody) => {
-                let json = 
-                    if (Utils.stringIsEmpty(responseBody)) {
-                        /* This is terrible... fix it */
-                        "{\"Response\":\"204 NoContent\"}";
-                    } else {
-                        responseBody
-                    };
-                Js.Json.parseExn(json) 
-                |> (s) => Success(s)
-            }
-        | ErrorResponse(apiResponseError) => {
-                Js.Json.parseExn(apiResponseError.jsonError) 
-                |> mapApiErrorResponse(apiResponseError.status)
-                |> (s) => Fail(s)
-            } 
-        } 
-    };
-
-    let handleProcessingError = (error) => {
+    let handleProcessingError = (error) : callResult => {
         /* Apparently this will only return "TypeError: failed to fetch"... 
            so the actual error cannot be retrieved... sigh */
         Js.log(error);
@@ -111,39 +63,51 @@ module Fetcher : FetcherType = {
                 message: "Unknown Error. Please try again later.",
                 detail: "Unknown Client Error."
             };
-        Fail(ApiError(err));
+        Error(err);
     };
 
-    let handleResult = (onSuccess, onError, result) => {
-        switch result {
-        | Success(json) => {
-            Js.log("API SUCCESS");
-            Js.log(json);
-            switch(onSuccess){
-            | OnJson(processJson) => processJson(json);
-            | On204(process204) => process204();
-            };
+    let debug = (callResult) => {
+        if (1 == 1) {
+            switch (callResult) {
+                | NoContent => Js.log("API SUCCESS: NO CONTENT")
+                | Ok(result) => {
+                    Js.log("API SUCCESS");
+                    Js.log(result);
+                }
+                | Unauthorised => Js.log("API ERROR: Unauthorised")
+                | Error(err) => {
+                    Js.log("API ERROR");
+                    Js.log(err);
+                }
+            }
         }
-        | Fail(error) => onError(error)
-        } 
     };
 
-    let callApi = (url, fetchOptions, onSuccess, onError) => {
-        let processResult = handleResult(onSuccess, onError);
-
+    let callApi = (url, fetchOptions, onResult) => {
         Js.Promise.(
             Bs_fetch.fetchWithInit(url, fetchOptions) 
-            |> then_(wrapResponse)
-            |> then_((result) => {
-                Js.log("API FUN");
-                Js.log(result);
-                handleResponse(result) |> processResult |> ignore;
-                resolve(None);
+            |> then_((response) => {
+                let ok = Bs_fetch.Response.ok(response); 
+                let status = Bs_fetch.Response.status(response);
+
+                Bs_fetch.Response.text(response)
+                |> then_((result) => {
+                    let apiResult : callResult = 
+                        switch (ok, status) {
+                            | (true,204)  => NoContent
+                            | (true,_)    => Ok(result)
+                            | (false,401) => Unauthorised
+                            | (false,_)   => toCallResultError(status, result) 
+                        };
+                    debug(apiResult);
+                    onResult(apiResult) |> ignore;
+                    resolve(None);
+                })
             })
             |> catch((ex) => {
-                Js.log("API NOT FUN");
+                Js.log("API FAILED TO CALL");
                 Js.log(ex);
-                handleProcessingError(ex) |> processResult |> ignore;
+                handleProcessingError(ex) |> onResult;
                 resolve(None);
             })
         ) |> ignore;
@@ -167,7 +131,7 @@ module Fetcher : FetcherType = {
         |> Js.Dict.fromList
     };
 
-    let get = (url, onSuccess: apiOnGetSuccess, onError: apiOnError) => {
+    let get = (url, onResult: callResult => unit) => {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Get,
@@ -176,10 +140,10 @@ module Fetcher : FetcherType = {
             ()
         );
 
-        callApi(url, fetchOptions, OnJson(onSuccess), onError);
+        callApi(url, fetchOptions, onResult);
     };
 
-    let post = (url, data, onSuccess: apiOnPostSuccess, onError: apiOnError) => {
+    let post = (url, data, onResult: callResult => unit) => {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Post,
@@ -189,7 +153,7 @@ module Fetcher : FetcherType = {
             ()
         );
     
-        callApi(url, fetchOptions, onSuccess, onError);
+        callApi(url, fetchOptions, onResult);
     };
 };
 

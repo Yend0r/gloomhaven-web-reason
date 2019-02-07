@@ -94,36 +94,34 @@ let serializeCharacterUpdate = (ch: characterUpdate) =>
         ("perks", list(serializeSelectedPerk, ch.perks))
     ]));
 
-let getList = (onSuccess, onError: Api.apiOnError) => {
-    let onFetchSuccess = (result) => { 
-        result
-        |> Serialization.deserializeApiListResponse(deserializeCharacterListItem)
-        |> onSuccess
-    };
+let getList = (onSuccess, onError) => {
+    let deserializer = 
+        deserializeCharacterListItem
+        |> Serialization.deserializeApiListResponse;
 
-    Api.Fetcher.get(Settings.charactersUrl(), onFetchSuccess, onError);
+    let onResult = Api.onContentResult(deserializer, onSuccess, onError);
+
+    Api.Fetcher.get(Settings.charactersUrl(), onResult);
 };
 
-let get = (id: int, onSuccess, onError: Api.apiOnError) => {
-    let onFetchSuccess = (result) => { 
-        result
-        |> deserializeCharacter
-        |> onSuccess
-    };
+let get = (id: int, onSuccess, onError: string => unit) => {
+    let onResult = Api.onContentResult(deserializeCharacter, onSuccess, onError);
 
-    Api.Fetcher.get(Settings.characterUrl(id), onFetchSuccess, onError);
+    Api.Fetcher.get(Settings.characterUrl(id), onResult);
 };
 
-let add = (newCharacter: newCharacter, onSuccess, onError: Api.apiOnError) => {
-    let onAddSuccess = (_) => onSuccess();
+let add = (newCharacter: newCharacter, onSuccess, onError) => {
     let postData = newCharacter |> Serialization.serialize(serializeNewCharacter);
 
-    Api.Fetcher.post(Settings.charactersUrl(), postData, On204(onAddSuccess), onError);
+    let onResult = Api.onNoContentResult(onSuccess, onError);
+
+    Api.Fetcher.post(Settings.charactersUrl(), postData, onResult);
 };
 
-let update = (characterId: int, characterUpdate: characterUpdate, onSuccess, onError: Api.apiOnError) => {
-    let onAddSuccess = (_) => onSuccess();
+let update = (characterId: int, characterUpdate: characterUpdate, onSuccess, onError) => {
     let postData = characterUpdate |> Serialization.serialize(serializeCharacterUpdate);
 
-    Api.Fetcher.post(Settings.characterUrl(characterId), postData, On204(onAddSuccess), onError);
+    let onResult = Api.onNoContentResult(onSuccess, onError);
+
+    Api.Fetcher.post(Settings.characterUrl(characterId), postData, onResult);
 };

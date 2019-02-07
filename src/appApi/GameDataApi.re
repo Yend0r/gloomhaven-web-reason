@@ -28,24 +28,18 @@ let deserializeGhClass = (json: Js.Json.t) : ghClass =>
         perks:       json |> field("perks", Json.Decode.list(deserializePerk))
     };
 
-let getList = (onSuccess, onError: Api.apiOnError) => {
+let getList = (onSuccess, onError: string => unit) => {
+    let deserializer = 
+        deserializeGhClass
+        |>Serialization.deserializeApiListResponse;
 
-    let onFetchSuccess = (result) => { 
-        result
-        |> Serialization.deserializeApiListResponse(deserializeGhClass)
-        |> onSuccess
-    };
+    let onResult = Api.onContentResult(deserializer, onSuccess, onError);
 
-    Api.Fetcher.get(Settings.ghClassesUrl(), onFetchSuccess, onError);
+    Api.Fetcher.get(Settings.ghClassesUrl(), onResult);
 };
 
-let get = (ghClassName, onSuccess, onError: Api.apiOnError) => {
+let get = (ghClassName, onSuccess, onError: string => unit) => {
+    let onResult = Api.onContentResult(deserializeGhClass, onSuccess, onError);
 
-    let onFetchSuccess = (result) => { 
-        result
-        |> deserializeGhClass
-        |> onSuccess
-    };
-
-    Api.Fetcher.get(Settings.ghClassUrl(ghClassName), onFetchSuccess, onError);
+    Api.Fetcher.get(Settings.ghClassUrl(ghClassName), onResult);
 };

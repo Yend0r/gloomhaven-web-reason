@@ -24,15 +24,13 @@ let serializeLoginRequest = (req: loginRequest) =>
         ("password", string(req.password))
     ]));
 
-let authenticate = (email: string, password: string, onAuthSuccess, onAuthError): unit => {
-    let onSuccess = (result) => 
-        result 
-        |> deserializeAuthUser 
-        |> onAuthSuccess;
+let authenticate = (email: string, password: string, onSuccess, onError): unit => {
+    
+    let onResult = Api.onContentResult(deserializeAuthUser, onSuccess, onError);
 
     let postData = 
         { email: email, password: password } 
         |> Serialization.serialize(serializeLoginRequest);
 
-    Api.Fetcher.post(Settings.authenticateUrl(), postData, OnJson(onSuccess), onAuthError);
+    Api.Fetcher.post(Settings.authenticateUrl(), postData, onResult);
 };
