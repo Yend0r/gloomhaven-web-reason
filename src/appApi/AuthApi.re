@@ -1,13 +1,13 @@
 type authUser = {
-    email: string,
-    name: string,
-    accessToken: string,
-    expiresAt: string
+    email       : string,
+    name        : string,
+    accessToken : string,
+    expiresAt   : string
 };
 
 type loginRequest = {
-    email: string,
-    password: string
+    email    : string,
+    password : string
 };
 
 let deserializeAuthUser = (json: Js.Json.t) : authUser => 

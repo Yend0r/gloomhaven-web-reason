@@ -8,8 +8,8 @@ let make = (~label,
             ~value, 
             ~onDecrement, 
             ~onIncrement, 
-            ~minInclusive, 
-            ~maxInclusive, 
+            ~minInclusive=?, 
+            ~maxInclusive=?, 
             ~showMax, 
             ~layout,
             _children) => {
@@ -19,48 +19,60 @@ let make = (~label,
   render: (_self) => {
         let onDec = (event) => {
             ReactEvent.Mouse.preventDefault(event);
-            if (value - 1 >= minInclusive) {
-                onDecrement();
-            }
+            switch (minInclusive) {
+            | Some(min) when value <= min => ()
+            | _ => onDecrement()
+            };
         };
 
         let onInc = (event) => {
             ReactEvent.Mouse.preventDefault(event);
-            if (value + 1 <= maxInclusive) {
-                onIncrement();
-            }
+            switch (maxInclusive) {
+            | Some(max) when value >= max => ()
+            | _ => onIncrement()
+            };
         };
         
-        let getValueDisplay = () => {
-            if (showMax) {
-                string_of_int(value) ++ "/" ++ string_of_int(maxInclusive)
+        let getValueDisplay = () => 
+            switch (showMax, maxInclusive) {
+            | (true, Some(max)) => string_of_int(value) ++ "/" ++ string_of_int(max)
+            | (_, _) => string_of_int(value)
+            };
+
+        let getTextCss = () => {
+            if (value == 0) {
+                "property-edit"
             } else {
-                string_of_int(value)
+                "property-edit has-text-primary"
             }
         };
 
-        let getBtnCss = () => {
-            if (value == 0) {
-                "button is-light"
-            } else {
-                "button is-primary"
-            }
-        };
+        let getLessBtnCss = () => 
+            switch (minInclusive) {
+            | Some(min) when value <= min => "button is-light"
+            | _ => "button is-light"
+            };
+
+        let getMoreBtnCss = () => 
+            switch (maxInclusive) {
+            | Some(max) when value >= max => "button is-light"
+            | _ => "button is-light"
+            };
 
         let renderField = () => 
             <div className="field is-narrow has-addons"> /*has-addons-centered*/
                 <p className="control">
-                    <a className=getBtnCss() onClick=onDec>
+                    <a className=getLessBtnCss() onClick=onDec>
                         (Elem.string("-"))
                     </a>
                 </p>
                 <div className="control">
-                    <p className="property-edit">
+                    <p className=(getTextCss())>
                         (Elem.string(getValueDisplay()))
                     </p>
                 </div>
                 <p className="control">
-                    <a className=getBtnCss() onClick=onInc>
+                    <a className=getMoreBtnCss() onClick=onInc>
                         (Elem.string("+"))
                     </a>
                 </p>

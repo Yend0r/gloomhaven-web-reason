@@ -1,46 +1,47 @@
 type claimedPerk = {
-    id: string,
-    quantity: int,
-    actions: string
+    id       : string,
+    quantity : int,
+    actions  : string
 };
 
 type character = {
-    id: int,
-    name: string,
-    ghClassName: string,
-    experience: int,
-    level: int,
-    hp: int,
-    gold: int,
-    achievements: int,
-    claimedPerks: list(claimedPerk)
+    id           : int,
+    name         : string,
+    ghClassName  : string,
+    experience   : int,
+    level        : int,
+    hp           : int,
+    gold         : int,
+    achievements : int,
+    claimedPerks : list(claimedPerk)
 };
 
 type characterListItem = {
-    id: int,
-    name: string,
-    ghClassName: string,
-    experience: int,
-    level: int,
-    gold: int
+    id          : int,
+    name        : string,
+    ghClassName : string,
+    experience  : int,
+    level       : int,
+    gold        : int,
+    scenarioId  : option(int)
 };
 
 type newCharacter = {
-    name: string,
-    ghClassName: string
+    name        : string,
+    ghClassName : string
 };
 
 type selectedPerk = {
-    id: string,
-    quantity: int
+    id       : string,
+    quantity : int
 };
 
 type characterUpdate = {
-    name: string,
-    experience: int,
-    gold: int,
-    achievements: int,
-    perks: list(selectedPerk)
+    name         : string,
+    experience   : int,
+    gold         : int,
+    achievements : int,
+    perks        : list(selectedPerk)
 };
 
 let deserializeClaimedPerk = (json: Js.Json.t) : claimedPerk => 
@@ -70,7 +71,8 @@ let deserializeCharacterListItem = (json: Js.Json.t) : characterListItem =>
         ghClassName: json |> field("className", string),
         experience:  json |> field("experience", int),
         level:       json |> field("level", int),
-        gold:        json |> field("gold", int)
+        gold:        json |> field("gold", int),
+        scenarioId:  json |> optional(field("scenarioId", int))
     };
 
 let serializeNewCharacter = (ch: newCharacter) => 

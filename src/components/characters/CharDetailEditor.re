@@ -4,26 +4,51 @@ type layout =
 
 let component = ReasonReact.statelessComponent("CharDetailEditor");
 
-let make = (~label, ~value, ~onDecrement, ~onIncrement, ~layout, _children) => {
+let make = (~label, 
+            ~value, 
+            ~onDecrement, 
+            ~onIncrement, 
+            ~minInclusive=?,
+            ~maxInclusive=?,  
+            ~layout, 
+            _children) => {
+
   ...component,
 
   render: (_self) => {
-        let onDec = Utils.handleBtnClick(onDecrement);
-        let onInc = Utils.handleBtnClick(onIncrement);
-        
-        let getBtnCss = () => {
-            if (value == 0) {
-                "button is-light"
-            } else {
-                "button is-primary"
-            }
+        let onDec = (event) => {
+            ReactEvent.Mouse.preventDefault(event);
+            switch (minInclusive) {
+            | Some(min) when value <= min => ()
+            | _ => onDecrement()
+            };
         };
 
+        let onInc = (event) => {
+            ReactEvent.Mouse.preventDefault(event);
+            switch (maxInclusive) {
+            | Some(max) when value >= max => ()
+            | _ => onIncrement()
+            };
+        };
+
+        let getLessBtnCss = () => 
+            switch (minInclusive) {
+            | Some(min) when value <= min => "button is-light"
+            | _ => "button is-light"
+            };
+
+        let getMoreBtnCss = () => 
+            switch (maxInclusive) {
+            | Some(max) when value >= max => "button is-light"
+            | _ => "button is-light"
+            };
+    
         let renderField = () => 
             <div className="field is-narrow has-addons"> /*has-addons-centered*/
                 <p className="control">
-                    <a className=getBtnCss() onClick=onDec>
-                        (Elem.string("Less"))
+                    <a className=getLessBtnCss() onClick=onDec>
+                        (Elem.string("-"))
                     </a>
                 </p>
                 <div className="control">
@@ -32,8 +57,8 @@ let make = (~label, ~value, ~onDecrement, ~onIncrement, ~layout, _children) => {
                     </p>
                 </div>
                 <p className="control">
-                    <a className=getBtnCss() onClick=onInc>
-                        (Elem.string("More"))
+                    <a className=getMoreBtnCss() onClick=onInc>
+                        (Elem.string("+"))
                     </a>
                 </p>
             </div>

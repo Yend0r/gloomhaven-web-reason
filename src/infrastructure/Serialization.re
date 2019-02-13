@@ -5,6 +5,16 @@ let serialize = (serializer: 'a => Js.Json.t, data: 'a) : string => {
     |> Js.Json.stringify;
 };
 
+let serializeString = (label: string, value: string) : string => {
+    Json.Encode.(object_([(label, string(value))]))
+    |> Js.Json.stringify;
+};
+
+let serializeInt = (label: string, value: int) : string => {
+    Json.Encode.(object_([(label, int(value))]))
+    |> Js.Json.stringify;
+};
+
 let deserialize = (deserializer: Js.Json.t => 'a, jsonString: string) : 'a => 
     jsonString 
     |> Js.Json.parseExn 

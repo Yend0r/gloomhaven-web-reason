@@ -1,9 +1,9 @@
 open Json;
 
 type apiError = {
-    status: int,
+    status:  int,
     message: string,
-    detail: string
+    detail:  string
 };
 
 type callResult = 
@@ -12,6 +12,7 @@ type callResult =
     | Unauthorised
     | Error(apiError);
 
+/* Helper to build a result handler for the clients */
 let onContentResult = (deserializer, onSuccess, onError) => (callResult) => {
     let onContentSuccess = (result) => 
         result 
@@ -27,6 +28,7 @@ let onContentResult = (deserializer, onSuccess, onError) => (callResult) => {
     };
 };
 
+/* Helper to build a result handler for the clients */
 let onNoContentResult = (onSuccess, onError) => (callResult) => 
     switch (callResult: callResult) {
         | NoContent => onSuccess()
@@ -46,17 +48,35 @@ let toCallResultError = (status, jsonString) =>
     |> mapApiErrorJson(status)
     |> (e) => Error(e);
 
+let debug = (callResult) => {
+    if (1 == 1) {
+        switch (callResult) {
+            | NoContent => Js.log("API SUCCESS: NO CONTENT")
+            | Ok(result) => {
+                Js.log("API SUCCESS");
+                Js.log(result);
+            }
+            | Unauthorised => Js.log("API ERROR: Unauthorised")
+            | Error(err) => {
+                Js.log("API ERROR");
+                Js.log(err);
+            }
+        }
+    }
+};
+
 module type FetcherType = {
     let get: (string, callResult => unit) => unit;
     let post: (string, string, callResult => unit) => unit;
+    let patch: (string, string, callResult => unit) => unit;
 };
 
 module Fetcher : FetcherType = {
   
-    let handleProcessingError = (error) : callResult => {
+    let handleProcessingError = (ex) : callResult => {
         /* Apparently this will only return "TypeError: failed to fetch"... 
            so the actual error cannot be retrieved... sigh */
-        Js.log(error);
+        Js.log(ex);
         let err =
             {
                 status: 500,
@@ -64,23 +84,6 @@ module Fetcher : FetcherType = {
                 detail: "Unknown Client Error."
             };
         Error(err);
-    };
-
-    let debug = (callResult) => {
-        if (1 == 1) {
-            switch (callResult) {
-                | NoContent => Js.log("API SUCCESS: NO CONTENT")
-                | Ok(result) => {
-                    Js.log("API SUCCESS");
-                    Js.log(result);
-                }
-                | Unauthorised => Js.log("API ERROR: Unauthorised")
-                | Error(err) => {
-                    Js.log("API ERROR");
-                    Js.log(err);
-                }
-            }
-        }
     };
 
     let callApi = (url, fetchOptions, onResult) => {
@@ -105,8 +108,6 @@ module Fetcher : FetcherType = {
                 })
             })
             |> catch((ex) => {
-                Js.log("API FAILED TO CALL");
-                Js.log(ex);
                 handleProcessingError(ex) |> onResult;
                 resolve(None);
             })
@@ -147,6 +148,19 @@ module Fetcher : FetcherType = {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Post,
+            ~body=Fetch.BodyInit.make(data),
+            ~credentials=Include,
+            ~headers=Fetch.HeadersInit.makeWithDict(getHeaders()),
+            ()
+        );
+    
+        callApi(url, fetchOptions, onResult);
+    };
+
+    let patch = (url, data, onResult: callResult => unit) => {
+
+        let fetchOptions = Fetch.RequestInit.make(
+            ~method_=Patch,
             ~body=Fetch.BodyInit.make(data),
             ~credentials=Include,
             ~headers=Fetch.HeadersInit.makeWithDict(getHeaders()),

@@ -1,15 +1,15 @@
 type perk = {
-    id: string,
-    quantity: int,
-    actions: string
+    id       : string,
+    quantity : int,
+    actions  : string
 };
 
 type ghClass = {
-    ghClassName: string,
-    name: string,
-    symbol: string,
-    isStarting: bool,
-    perks: list(perk)
+    ghClassName : string,
+    name        : string,
+    symbol      : string,
+    isStarting  : bool,
+    perks       : list(perk)
 };
 
 let deserializePerk = (json: Js.Json.t) : perk => 

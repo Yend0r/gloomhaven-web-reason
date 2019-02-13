@@ -58,7 +58,7 @@ let make = (_children) => {
         <nav className="navbar is-primary">
             <div className="navbar-brand">
                 <div className="navbar-item brand-text is-size-5">
-                    (Elem.string("GloomChars"))
+                    <i className="fas fa-dice-d6 p-r-xs"></i> (Elem.string("GloomChars"))
                 </div>
                 <a role="button" 
                     className=(appendIsActive("navbar-burger")) 

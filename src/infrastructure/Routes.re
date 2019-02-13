@@ -32,7 +32,9 @@ module CharacterRoutes = {
         | List
         | Add
         | Edit(int)
-        | Details(int);
+        | Details(int)
+        | NewScenario(int)
+        | Scenario(int);
 
     let pathHandler = route => 
         switch route {
@@ -40,6 +42,8 @@ module CharacterRoutes = {
             | Add => "/characters/add"
             | Edit(id) => "/characters/edit/" ++ string_of_int(id)
             | Details(id) => "/characters/details/" ++ string_of_int(id)
+            | NewScenario(id) => "/characters/scenario/new/" ++ string_of_int(id)
+            | Scenario(id) => "/characters/scenario/" ++ string_of_int(id)
         };
 };
 

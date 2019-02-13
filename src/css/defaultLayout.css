@@ -3,7 +3,7 @@ nav.navbar {
   margin-bottom: 1rem;
 }
 .navbar-item.brand-text {
-  font-weight: 300;
+  font-weight: 600;
   font-size: larger;
 }
 .navbar-item, .navbar-link {

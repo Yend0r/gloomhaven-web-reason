@@ -15,12 +15,32 @@ let make = (~data: list(CharacterApi.characterListItem), _children) => {
         let gotoEdit = (id: int) => 
             () => Routes.navigate(Routes.Character(Edit(id)));
 
+        let gotoScenario = (id: int) => 
+            () => Routes.navigate(Routes.Character(Scenario(id)));
+
+        let gotoNewScenario = (id: int) => 
+            () => Routes.navigate(Routes.Character(Edit(id)));
+
+        let renderPlayBtn = (id, scenarioId) => 
+            switch (scenarioId) {
+            | Some(_) =>
+                <UIButton 
+                    title="Play Scenario" 
+                    onClick=gotoScenario(id) 
+                    classes="button is-primary m-r-md" />
+            | None =>
+                <UIButton 
+                    title="New Scenario" 
+                    onClick=gotoNewScenario(id) 
+                    classes="button is-primary m-r-md" />
+            }
+
         let renderTR = (label, value) => 
             <tr>
                 <td className="has-text-weight-bold">(Elem.string(label))</td>
                 <td className="has-text-weight-bold">(Elem.string(value))</td>
             </tr>
-
+            
         let renderChar = (idx, item: CharacterApi.characterListItem) => 
             <div 
                 className="column is-5 m-r-xl" 
@@ -37,10 +57,7 @@ let make = (~data: list(CharacterApi.characterListItem), _children) => {
                             </tbody>
                         </table> 
 
-                        <UIButton 
-                            title="Play Character" 
-                            onClick=gotoDetails(item.id) 
-                            classes="button is-primary m-r-md" />
+                        (renderPlayBtn(item.id, item.scenarioId))
 
                         <UIButton 
                             title="Edit Character" 
