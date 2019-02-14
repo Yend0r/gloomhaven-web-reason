@@ -65,7 +65,7 @@ let newScenario = (characterId: int, name: string, onSuccess, onError) => {
 };
 
 let completeScenario = (characterId: int, onSuccess, onError) => {
-    let onResult = Api.onContentResult(deserializeScenario, onSuccess, onError);
+    let onResult = Api.onNoContentResult(onSuccess, onError);
 
     Api.Fetcher.delete(Settings.scenarioUrl(characterId), onResult);
 };

@@ -24,7 +24,8 @@ let make = (~character: CharacterApi.character,
             ~onHpUpdate,
             ~onXpUpdate,
             ~onDrawCard,
-            ~onReshuffle, 
+            ~onReshuffle,
+            ~onComplete, 
             ~onCancel, 
             _children) => {
 
@@ -87,6 +88,7 @@ let make = (~character: CharacterApi.character,
         let onClickDrawCard = () => onDrawCard();
         let onClickReshuffle = () => onReshuffle();
         
+        let complete = () => onComplete();
         let cancel = () => onCancel(); 
  
 
@@ -184,7 +186,7 @@ let make = (~character: CharacterApi.character,
                     <div className="control">
                         <UIButton 
                             title="End Scenario" 
-                            onClick=cancel 
+                            onClick=complete 
                             classes="button is-info" />
                     </div>
                     <div className="control">

@@ -94,7 +94,14 @@ let make = (~characterId: int, _children) => {
             ScenarioApi.drawCard(characterId, onSuccess, onError); 
         
         let onReshuffle = () => 
-            ScenarioApi.reshuffle(characterId, onSuccess, onError);         
+            ScenarioApi.reshuffle(characterId, onSuccess, onError);
+            
+        
+        let onComplete = () => {
+            let onError = (error) => send(SetSubmissionError(error));
+            let onCompleteSuccess = () => Routes.navigate(Routes.Character(List));
+            ScenarioApi.completeScenario(characterId, onCompleteSuccess, onError);
+        };
 
         let displayData = (optCharacter, optScenario) => {
             switch (optCharacter, optScenario) {
@@ -106,6 +113,7 @@ let make = (~characterId: int, _children) => {
                     onXpUpdate
                     onDrawCard
                     onReshuffle
+                    onComplete
                     onCancel  />    
             }            
             | _ => 

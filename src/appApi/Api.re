@@ -65,6 +65,7 @@ let debug = (callResult) => {
 
 module type FetcherType = {
     let get: (string, callResult => unit) => unit;
+    let delete: (string, callResult => unit) => unit;
     let post: (string, string, callResult => unit) => unit;
     let patch: (string, string, callResult => unit) => unit;
 };
@@ -132,6 +133,18 @@ module Fetcher : FetcherType = {
 
         let fetchOptions = Fetch.RequestInit.make(
             ~method_=Get,
+            ~credentials=Include,
+            ~headers=Fetch.HeadersInit.makeWithDict(getHeaders()),
+            ()
+        );
+
+        callApi(url, fetchOptions, onResult);
+    };
+
+    let delete = (url, onResult: callResult => unit) => {
+
+        let fetchOptions = Fetch.RequestInit.make(
+            ~method_=Delete,
             ~credentials=Include,
             ~headers=Fetch.HeadersInit.makeWithDict(getHeaders()),
             ()
