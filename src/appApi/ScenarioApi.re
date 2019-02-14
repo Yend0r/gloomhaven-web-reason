@@ -59,15 +59,19 @@ let get = (characterId: int, onSuccess, onError: string => unit) => {
 
 let newScenario = (characterId: int, name: string, onSuccess, onError) => {
     let postData = Serialization.serializeString("name", name);
-
     let onResult = Api.onNoContentResult(onSuccess, onError);
 
     Api.Fetcher.post(Settings.scenarioUrl(characterId), postData, onResult);
 };
 
+let completeScenario = (characterId: int, onSuccess, onError) => {
+    let onResult = Api.onContentResult(deserializeScenario, onSuccess, onError);
+
+    Api.Fetcher.delete(Settings.scenarioUrl(characterId), onResult);
+};
+
 let hpUpdate = (characterId: int, health: int, onSuccess, onError) => {
     let postData = Serialization.serializeInt("health", health);
-
     let onResult = Api.onContentResult(deserializeScenario, onSuccess, onError);
 
     Api.Fetcher.patch(Settings.scenarioStatsUrl(characterId), postData, onResult);
@@ -75,7 +79,6 @@ let hpUpdate = (characterId: int, health: int, onSuccess, onError) => {
 
 let xpUpdate = (characterId: int, experience: int, onSuccess, onError) => {
     let postData = Serialization.serializeInt("experience", experience);
-
     let onResult = Api.onContentResult(deserializeScenario, onSuccess, onError);
 
     Api.Fetcher.patch(Settings.scenarioStatsUrl(characterId), postData, onResult);
@@ -83,7 +86,6 @@ let xpUpdate = (characterId: int, experience: int, onSuccess, onError) => {
 
 let deckAction = (characterId: int, action: string, onSuccess, onError) => {
     let postData = Serialization.serializeString("action", action);
-
     let onResult = Api.onContentResult(deserializeScenario, onSuccess, onError);
 
     Api.Fetcher.post(Settings.scenarioDeckUrl(characterId), postData, onResult);

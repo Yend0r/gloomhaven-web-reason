@@ -1,3 +1,4 @@
+
 /* This is a bit lame, but it'll do for now */
 let stringIsEmail = (str) => 
     String.contains(str, '@') && String.contains(str, '.') && String.length(str) > 3;

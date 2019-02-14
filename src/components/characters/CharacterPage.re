@@ -7,7 +7,7 @@ let make = (~url: ReasonReact.Router.url, _children) => {
     render: (_self) => {
 
         let renderOrDefault = (idStr, renderElement) => {
-            switch (Convert.toInt(idStr)) {
+            switch (Convert.toIntOpt(idStr)) {
                 | Some(characterId) => renderElement(characterId)
                 | None => <CharacterList />
             };

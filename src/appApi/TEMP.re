@@ -49,20 +49,18 @@ let toCallResultError = (status, jsonString) =>
     |> (e) => Error(e);
 
 let debug = (callResult) => {
-    if (1 == 1) {
-        switch (callResult) {
-            | NoContent => Js.log("API SUCCESS: NO CONTENT")
-            | Ok(result) => {
-                Js.log("API SUCCESS");
-                Js.log(result);
-            }
-            | Unauthorised => Js.log("API ERROR: Unauthorised")
-            | Error(err) => {
-                Js.log("API ERROR");
-                Js.log(err);
-            }
+    switch (callResult) {
+        | NoContent => Debug.log("API SUCCESS: NO CONTENT")
+        | Ok(result) => {
+            Debug.log("API SUCCESS");
+            Debug.log(result);
         }
-    }
+        | Unauthorised => Debug.log("API ERROR: Unauthorised")
+        | Error(err) => {
+            Debug.log("API ERROR");
+            Debug.log(err);
+        }
+    };
 };
 
 module type FetcherType = {
@@ -74,7 +72,7 @@ module type FetcherType = {
 module Fetcher : FetcherType = {
   
     let handleProcessingError = (ex) : callResult => {
-        Js.log(ex);
+        Debug.log(ex);
         let err =
             {
                 status: 500,

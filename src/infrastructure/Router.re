@@ -30,7 +30,7 @@ module SpecialPages = {
 };
 
 let matchRoute = (rootPath: string) => {
-    Js.log("Router: matching on: " ++ rootPath);
+    Debug.log("Router: matching on: " ++ rootPath);
     switch rootPath {
         | ""             => Pages.home
         | "auth" => Pages.auth
