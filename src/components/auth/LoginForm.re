@@ -36,12 +36,8 @@ let make = (~onSubmit, ~submissionError=?, _children) => {
         let changePassword = (event) => send(ChangePassword(event |> Utils.valueFromEvent));
 
         let submit = () => {
-            Js.log("Calling submit");
             send(ClearError);
-
-            onSubmit("rod.buchan@gmail.com", "test1234");
-
-            /*            
+          
             let emailValid = Utils.stringIsEmail(state.email);
             let pwdValid = !Utils.stringIsEmpty(state.password);
 
@@ -50,7 +46,7 @@ let make = (~onSubmit, ~submissionError=?, _children) => {
             | (false, true) => send(SetError("Please enter a valid email."));
             | (true, false) => send(SetError("Please enter a password."));
             | (true, true) => onSubmit(state.email, state.password);
-            };*/
+            };
         };
 
         <div className="container has-text-centered">
