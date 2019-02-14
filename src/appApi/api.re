@@ -74,8 +74,6 @@ module type FetcherType = {
 module Fetcher : FetcherType = {
   
     let handleProcessingError = (ex) : callResult => {
-        /* Apparently this will only return "TypeError: failed to fetch"... 
-           so the actual error cannot be retrieved... sigh */
         Js.log(ex);
         let err =
             {

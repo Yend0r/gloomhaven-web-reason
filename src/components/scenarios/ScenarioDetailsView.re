@@ -129,7 +129,7 @@ let make = (~character: CharacterApi.character,
         
         <div className="columns">
             <div className="column is-6">
-                <h3 className="title is-3">(Elem.string("Play Scenario"))</h3>
+                <h3 className="title is-3">(Elem.string(scenario.name))</h3>
 
                 <div>
                     <a className="button is-large is-primary is-outlined m-r-md" onClick=(Utils.handleBtnClick(toggleHpModal))>

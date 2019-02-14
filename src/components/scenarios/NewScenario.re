@@ -6,9 +6,9 @@ type state = {
 type action =
     | SetSubmissionError(string);
 
-let component = ReasonReact.reducerComponent("CharacterAdd");
+let component = ReasonReact.reducerComponent("NewScenario");
 
-let make = (_children) => {
+let make = (~characterId, _children) => {
     ...component,
 
     initialState: () => { 
@@ -24,22 +24,22 @@ let make = (_children) => {
 
     render: ({state, send}) => {   
  
-        let showList = () => Routes.navigate(Routes.Character(List));
+        let onCancel = () => Routes.navigate(Routes.Character(List));
 
-        let onSubmit = (newCharacter) => {
+        let onSubmit = (name) => {
             let onError = (msg) => send(SetSubmissionError(msg));
-            let onSuccess = () => showList(); 
+            let onSuccess = () => Routes.navigate(Routes.Character(Scenario(characterId)));
 
-            CharacterApi.add(newCharacter, onSuccess, onError); 
+            ScenarioApi.newScenario(characterId, name, onSuccess, onError); 
         };
 
         <div className="columns">
             <div className="column is-4">
                 <div className="content is-medium">
-                    <h3 className="title is-3">(Elem.string("New Character"))</h3>
-                    <CharacterAddForm 
+                    <h3 className="title is-3">(Elem.string("New Scenario"))</h3>
+                    <NewScenarioForm 
                         onSubmit={onSubmit} 
-                        onCancel={showList} 
+                        onCancel={onCancel} 
                         submissionError=?{state.submissionError} />
                 </div>
             </div>

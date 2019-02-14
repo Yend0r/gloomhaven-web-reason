@@ -19,7 +19,7 @@ let make = (~data: list(CharacterApi.characterListItem), _children) => {
             () => Routes.navigate(Routes.Character(Scenario(id)));
 
         let gotoNewScenario = (id: int) => 
-            () => Routes.navigate(Routes.Character(Edit(id)));
+            () => Routes.navigate(Routes.Character(NewScenario(id)));
 
         let renderPlayBtn = (id, scenarioId) => 
             switch (scenarioId) {

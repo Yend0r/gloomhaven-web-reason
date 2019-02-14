@@ -22,6 +22,8 @@ let make = (~url: ReasonReact.Router.url, _children) => {
             renderOrDefault(idStr, characterId => <CharacterDetails characterId />)
         | ["characters", "scenario", idStr] => 
             renderOrDefault(idStr, characterId => <ScenarioDetails characterId />)
+        | ["characters", "new-scenario", idStr] => 
+            renderOrDefault(idStr, characterId => <NewScenario characterId />)
         | _ => 
             <CharacterList />
         };

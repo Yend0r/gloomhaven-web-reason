@@ -35,11 +35,8 @@ let make = (~characterId: int, _children) => {
     reducer: (action, state) => {
         switch action {
             | UpdateScenario(scenario) => {
-                Js.log("UpdateScenario 1");
-                Js.log(scenario.health);
                 ReasonReact.Update({...state, scenario: Some(scenario)});
             }
-
             | Loaded(character, scenario) => 
                 ReasonReact.Update(
                     {
@@ -82,17 +79,6 @@ let make = (~characterId: int, _children) => {
 
     render: ({state, send}) => { 
 
-        switch (state.scenario) {
-            | Some(s) => {               
-                Js.log("UpdateScenario 2");
-                Js.log(s.health); 
-            }     
-            | _ => {               
-                Js.log("UpdateScenario???");
-            }     
-            };
-        
-
         let onCancel = () => Routes.navigate(Routes.Character(List));
 
         let onError = (error) => send(SetSubmissionError(error));
@@ -113,10 +99,6 @@ let make = (~characterId: int, _children) => {
         let displayData = (optCharacter, optScenario) => {
             switch (optCharacter, optScenario) {
             | (Some(character), Some(scenario)) => {  
-
-                Js.log("UpdateScenario 3");
-                Js.log(scenario.health);   
-
                 <ScenarioDetailsView
                     character
                     scenario

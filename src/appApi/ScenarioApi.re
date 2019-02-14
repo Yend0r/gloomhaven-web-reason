@@ -13,7 +13,6 @@ type modifierDeck = {
 };
 
 type scenario = {
-    id            : int,
     characterId   : int,
     name          : string,
     health        : int, 
@@ -42,7 +41,6 @@ let deserializeDeck = (json: Js.Json.t) : modifierDeck =>
 
 let deserializeScenario = (json: Js.Json.t) : scenario => 
     Json.Decode.{
-        id:            json |> field("id", int),
         characterId:   json |> field("characterId", int),
         name:          json |> field("name", string),
         health:        json |> field("health", int),
