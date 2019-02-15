@@ -53,15 +53,15 @@ let deserializeClaimedPerk = (json: Js.Json.t) : claimedPerk =>
 
 let deserializeCharacter = (json: Js.Json.t) : character => 
     Json.Decode.{
-        id:             json |> field("id", int),
-        name:           json |> field("name", string),
-        ghClassName:    json |> field("className", string),
-        experience:     json |> field("experience", int),
-        level:          json |> field("level", int),
-        hp:             json |> field("hp", int),
-        gold:           json |> field("gold", int),
-        achievements:   json |> field("achievements", int),
-        claimedPerks:   json |> field("claimedPerks", Json.Decode.list(deserializeClaimedPerk))
+        id:           json |> field("id", int),
+        name:         json |> field("name", string),
+        ghClassName:  json |> field("className", string),
+        experience:   json |> field("experience", int),
+        level:        json |> field("level", int),
+        hp:           json |> field("hp", int),
+        gold:         json |> field("gold", int),
+        achievements: json |> field("achievements", int),
+        claimedPerks: json |> field("claimedPerks", Json.Decode.list(deserializeClaimedPerk))
     };
 
 let deserializeCharacterListItem = (json: Js.Json.t) : characterListItem => 
