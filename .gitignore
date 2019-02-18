@@ -9,4 +9,6 @@ npm-debug.log
 
 .cache
 .vscode/
-._dev-notes.md
+_dev-notes\.md
+
+_test\.html
