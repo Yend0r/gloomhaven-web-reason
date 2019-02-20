@@ -5,7 +5,6 @@ let make = (~data: list(CharacterApi.characterListItem), _children) => {
     ...component,
 
     render: (_self) => {   
-
         let gotoAdd = () => 
             Routes.navigate(Routes.Character(Add));
             

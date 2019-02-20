@@ -4,53 +4,99 @@ type pageLayout =
     | DefaultLayout;
 
 type routePage = {
-    getPage: (ReasonReact.Router.url => ReasonReact.reactElement),
+    renderPage: (unit => ReasonReact.reactElement),
     layout: pageLayout,
     authRequired: bool
 };
 
-let createPage = (layout, authRequired, getPage) => {
+let createPage = (layout, authRequired, renderPage) => {
     layout: layout, 
-    getPage: getPage,
+    renderPage: renderPage,
     authRequired: authRequired
 };
 
-/* These are the "top-level" routes that then have further routing within them */
-module Pages = {
-    let auth = createPage(LoginLayout, false, (url) => <AuthPage url/>);
-    let accounts = createPage(DefaultLayout, true, (url) => <AuthPage url/>);
-    let home = createPage(DefaultLayout, true, (url) => <CharacterPage url />);
-    let notFound = createPage(DefaultLayout, false, (url) => <AuthPage url />);
-    let characters = createPage(DefaultLayout, true, (url) => <CharacterPage url />);
+let createDefaultPage = (elem) => {
+    layout: DefaultLayout, 
+    renderPage: () => elem,
+    authRequired: true
 };
+
+let createLoginPage = (elem) => {
+    layout: LoginLayout, 
+    renderPage: () => elem,
+    authRequired: false
+};
+
+let renderOrDefault = (idStr, renderElement, defaultElement) => 
+    switch (Convert.toIntOpt(idStr)) {
+        | Some(id) => createDefaultPage(renderElement(id))
+        | None => createDefaultPage(defaultElement)
+    };    
 
 module SpecialPages = {
-    let loginPage = Pages.auth;
-    let homePage = Pages.characters;
+    let loginPage = createLoginPage(<Login />);
+    let homePage = createDefaultPage(<CharacterList />);
+    let notFoundPage = createLoginPage(<PageNotFound />);
 };
 
-let matchRoute = (rootPath: string) => {
-    Debug.log("Router: matching on: " ++ rootPath);
-    switch rootPath {
-        | ""             => Pages.home
-        | "auth" => Pages.auth
-        | "accounts"     => Pages.accounts
-        | "characters"   => Pages.characters
-        | _ => Pages.notFound /* no match => go to 404 */
+let authRoute = (url: ReasonReact.Router.url) => 
+    switch (url.path) {  
+        | ["auth", "login"] => 
+            createLoginPage(<Login />)
+        | ["auth", "password-reset"] => 
+            createLoginPage(<Login />) /* pwd reset not implemented yet */
+        | _ => 
+            SpecialPages.notFoundPage
+    };
+
+let accountsRoute = (url: ReasonReact.Router.url) => 
+    switch (url.path) {
+        | ["accounts", "profile"] => 
+            createDefaultPage(<Profile />)
+        | _ => 
+            SpecialPages.notFoundPage
+    };
+
+let characterRoute = (url: ReasonReact.Router.url) => {
+    let renderCh = (idStr, renderElement) =>
+        renderOrDefault(idStr, renderElement, <CharacterList />);
+    
+    switch (url.path) {
+        | ["characters"] => 
+            createDefaultPage(<CharacterList />)
+        | ["characters", "add"] => 
+            createDefaultPage(<CharacterAdd />)
+        | ["characters", "edit", idStr] => 
+            renderCh(idStr, characterId => <CharacterEdit characterId />)
+        | ["characters", "details", idStr] => 
+            renderCh(idStr, characterId => <CharacterDetails characterId />)
+        | ["characters", "scenario", idStr] => 
+            renderCh(idStr, characterId => <ScenarioDetails characterId />)
+        | ["characters", "new-scenario", idStr] => 
+            renderCh(idStr, characterId => <NewScenario characterId />)
+        | _ => 
+            SpecialPages.notFoundPage
     };
 };
 
 let getPageForRoute = (isLoggedIn, url: ReasonReact.Router.url) => {
 
+    Debug.log("Router matching on: ");
+    Debug.log(url);
+
     let page = 
         switch (url.path) {
-            | [rootPath, ..._rest] => matchRoute(rootPath) 
-            | _ => Pages.home /* no path => go to default page */
+            | ["", ..._] => SpecialPages.homePage
+            | ["auth", ..._] => authRoute(url) 
+            | ["accounts", ..._] => authRoute(url) 
+            | ["characters", ..._] => characterRoute(url) 
+            | ["scenarios", ..._] => characterRoute(url) 
+            | _ => SpecialPages.notFoundPage
         };
 
-    /* Check that user is authorised to view content */
+    /* Check if login is required to view page */
     switch (isLoggedIn, page.authRequired) {
-        | (false, true) => Pages.auth /* No access... force login */             
+        | (false, true) => SpecialPages.loginPage /* No access... force login */             
         | (_, _) => page 
     };
 };

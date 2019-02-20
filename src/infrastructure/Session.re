@@ -29,6 +29,9 @@ let clearSession = () => Dom_storage.clear(Dom_storage.sessionStorage);
 
 let storedUserKey = "GloomChars.sessionUser";
 
+/*
+ Storing user and token in local storage for simplicity... will switch to HttpOnly cookie if real scurity needed. 
+*/
 let getStoredUser = (): option(sessionUser) => {
     try (
         getSessionItem(storedUserKey)
@@ -55,6 +58,9 @@ let getCurrentUser = () => storedUser^;
 
 let isLoggedIn = () => Belt.Option.isSome(storedUser^);
 
+/*
+ Storing user and token in local storage for simplicity... will switch to HttpOnly cookie if real scurity needed. 
+*/
 let setSessionUser = (user: sessionUser) => {
     user
     |> Serialization.serialize(serializeUser)

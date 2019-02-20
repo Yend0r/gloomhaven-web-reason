@@ -17,10 +17,12 @@ module AccountRoutes = {
     let rootPath = "accounts";
 
     type route = 
+        | Profile
         | ChangePassword;
 
     let pathHandler = route => 
         switch route {
+            | Profile => "/accounts/profile"
             | ChangePassword => "/accounts/change-password"
         };
 };
@@ -47,25 +49,15 @@ module CharacterRoutes = {
         };
 };
 
-module SpecialRoutes = {
-    type route = 
-        | Home
-        | NotFound;
-
-    let pathHandler = route => 
-        switch route {
-            | Home => ""
-            | NotFound => "/404"
-        };
-};
-
 type t = 
+    | Home
     | Auth(AuthRoutes.route)
     | Account(AccountRoutes.route)
     | Character(CharacterRoutes.route);
 
 let pathFor = (route: t) : string => 
     switch (route) {
+        | Home => CharacterRoutes.pathHandler(List)
         | Auth(r) => AuthRoutes.pathHandler(r)
         | Account(r) => AccountRoutes.pathHandler(r)
         | Character(r) => CharacterRoutes.pathHandler(r)

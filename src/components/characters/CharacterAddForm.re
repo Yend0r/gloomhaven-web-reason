@@ -32,6 +32,7 @@ let make = (~onSubmit: CharacterApi.newCharacter => unit, ~onCancel, ~submission
     },
 
     render: ({state, send}) => {   
+        Debug.log("CharacterAddForm======CharacterAddForm======CharacterAddForm======CharacterAddForm");
 
         let onChangeName = (event) => send(ChangeName(event |> Utils.valueFromEvent));
         let onChangeClass = (event) => send(ChangeClass(event |> Utils.valueFromEvent));

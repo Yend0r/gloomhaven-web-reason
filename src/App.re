@@ -29,7 +29,7 @@ let make = (_children) => {
         let renderContent = () => {
             let isLoggedIn = Session.isLoggedIn();
             let routePage = Router.getPageForRoute(isLoggedIn, state.currentUrl);
-            let page = routePage.getPage(state.currentUrl);
+            let page = routePage.renderPage();
 
             switch (routePage.layout) {
                 | DefaultLayout => 

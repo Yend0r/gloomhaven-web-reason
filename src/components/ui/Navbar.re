@@ -36,7 +36,7 @@ let make = (_children) => {
             Routes.navigate(Routes.Character(List));
 
         let gotoProfile = () => 
-            Routes.navigate(Routes.Character(List));
+            Routes.navigate(Account(Routes.AccountRoutes.Profile));
 
         let toggleMenu = (_event) => 
             self.send(ToggleMenu(!self.state.isMobileMenuVisible));
